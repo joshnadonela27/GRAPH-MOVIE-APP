@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Graph Recommender</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <div class="container">
+        <h1>🎬 Movie Graph Recommender</h1>
+        <p>Find connected movies using Graph Database</p>
+
+        <div class="search-box">
+            <input type="text" id="movieInput" placeholder="Enter movie title (e.g. Inception)">
+            <button onclick="getRecommendations()">Search</button>
+        </div>
+
+        <div id="statusMessage"></div>
+        <div id="resultsContainer" class="results-grid"></div>
+    </div>
+
+    <script>
+        async function getRecommendations() {
+            const title = document.getElementById('movieInput').value.trim();
+            const statusDiv = document.getElementById('statusMessage');
+            const resultsDiv = document.getElementById('resultsContainer');
+
+            if (!title) {
+                statusDiv.innerHTML = '<p class="error">Please enter a movie title.</p>';
+                return;
+            }
+
+            statusDiv.innerHTML = '<p>Searching database...</p>';
+            resultsDiv.innerHTML = '';
+
+            try {
+                const response = await fetch(`http://127.0.0.1:5000/api/recommend?title=${encodeURIComponent(title)}`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    statusDiv.innerHTML = '';
+                    if (data.length === 0) {
+                        resultsDiv.innerHTML = '<p>No recommendations found for this movie.</p>';
+                        return;
+                    }
+
+                    data.forEach(item => {
+                        const card = document.createElement('div');
+                        card.className = 'card';
+                        card.innerHTML = `
+                            <h3>${item.title}</h3>
+                            <p><strong>Connected via Actor:</strong> ${item.actor}</p>
+                            <p><strong>Genre:</strong> ${item.genre}</p>
+                        `;
+                        resultsDiv.appendChild(card);
+                    });
+                } else {
+                    statusDiv.innerHTML = `<p class="error">${data.error}</p>`;
+                }
+            } catch (err) {
+                statusDiv.innerHTML = '<p class="error">Backend server is not running.</p>';
+            }
+        }
+    </script>
+</body>
+</html>
